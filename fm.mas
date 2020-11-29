@@ -1,0 +1,37 @@
+start:              ldc     msg1                                ; 
+                    sout                                        ; Prompt to ask user if there is another problem
+                    ain                                         ;
+                    sub     no                                  ; Checks for "n" response
+                    jnz     input                               ;
+                    halt                                        ;
+input:              ldc     msg2                                ; Prompt user to enter xin
+                    sout                                        ;
+                    ldc     xin                                 ;                    
+                    sin                                         ;
+                    ldc     msg3                                ;
+                    sout                                        ; Prompt user to enter yin
+                    ldc     yin                                 ;
+                    sin                                         ;
+                    ldc     yin                                 ;
+                    push                                        ;
+                    ldc     xin                                 ;
+                    push                                        ; Pushes both xin and yin into the stack for function call floatMul
+                    call    floatMul                            ;
+
+
+;=============================================================  FLOATMUL  =================================================================
+floatMul:           pop                                         ; Pops xin
+                    add     index                               ;
+                    ldi                                         ; Parses one char of the string of numbers
+
+
+
+index:              dw      0                                   ;
+negCheck:           dw      2Dh                                 ; Check to set negative flag
+;==========================================================================================================================================
+msg1:               dw      "enter another problem? (y/n)"      ;
+msg2:               dw      "enter xin:"                        ;
+msg3:               dw      "enter yin:"                        ;
+no:                 dw      6Eh                                 ;
+xin:                dw      20 dup 0                            ;
+yin:                dw      20 dup 0                            ;
