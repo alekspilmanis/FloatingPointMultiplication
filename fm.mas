@@ -19,19 +19,101 @@ input:              ldc     msg2                                ; Prompt user to
                     call    floatMul                            ;
 
 
-;=============================================================  FLOATMUL  =================================================================
-floatMul:           pop                                         ; Pops xin
+;=============================================================  FLOATMUL  =================================================================           
+floatMul:           ldr     0                                   ; Parses one char of the string of numbers,
+                    st      temp                                ; Stores it in temp
+                    sub     negCheck                            ; First of a series of checks; this sets the xflag
+                    jnz     zeroCheckX                          ;
+                    ld      @1                                  ;
+                    st      xflag                               ; Sets xflag = 1 if String of numbers is negative
+                    pop                                         ;
+                    add     @1                                  ;
+                    push                                        ;
+                    ja      floatMul                            ;
+zeroCheckX:         ld      leadingZeroLeft                     ; Checks for leading zeros. If leadingZeroLeft is set to 1, jumps to decimalX
+                    jnz     decimalX                            ;
+                    ld      temp                                ;
+                    jnz     decimalX                            ;
+                    pop                                         ;
+                    add     @1                                  ;
+                    push                                        ;
+                    ja      floatMul                            ;
+decimalX:           ld      temp                                ; Checks for decimal point
+                    sub     decimalCheck                        ;
+                    jnz     storeX                              ; If all checks are completed, jump to storeX and store digit in xArray
+                    pop                                         ;
+                    add     @1                                  ;
+                    push                                        ;
+                    ja      rightOfDecimalX                     ; If a decimal point is detected, jump to a different loop called rightOfDecimalX
+storeX:             ld      temp                                ;
+                    push                                        ;
+                    ldc     xArray                              ;
                     add     index                               ;
-                    ldi                                         ; Parses one char of the string of numbers
+                    sti                                         ; Stored in xArray
+                    ld      index                               ;
+                    add     @1                                  ;
+                    st      index                               ;
+                    ja      floatMul                            ;
+rightOfDecimalX:    ldr     0                                   ; ***************************************************************** NOTE: ENTER DISCLAIMER, THAT PROGRAM WILL ONLY WORK WITH A DECIMAL POINT IN THE NUMBER
+                    st      temp                                ;
+                    jnz     endOfStringX                        ;
+                    push                                        ;
+                    ldc     xArray                              ;
+                    add     index                               ;
+                    sti                                         ;
+                    pop                                         ; Increment xin index
+                    add     @1                                  ;
+                    push                                        ;
+                    ld      index                               ; Incremenet xArray index
+                    add     @1                                  ;
+                    st      index                               ;
+                    ld      xpointTemp                          ;
+                    add     @1                                  ;
+                    st      xpointTemp                          ; Adds a value to xpointTemp, but only gets added to xpoint if there exists a significant digit to the right of these zeros.
+                    ja      rightOfDecimalX                     ;
+endOfStringX:       add     @1                                  ;
+                    jnz     storeXRight                         ; All checks done, jumps to Stores
+                    pop                                         ;
+                    ld      @0                                  ; Resets all reused variables, before jumping to floatMulY
+                    st      index                               ;
+                    st      leadingZeroLeft                     ;
+                    ja      floatMulY                           ; If at the end of xin, repeat process with yin
+storeXRight:        ld      temp                                ;
+                    push                                        ;
+                    ldc     xArray                              ;
+                    add     index                               ;
+                    sti                                         ;
+                    ld      xpoint                              ;
+                    add     @1                                  ;
+                    add     xpointTemp                          ; Adds any leading zeros to xpoint, if digit stored is to the right of those zeros
+                    st      xpoint                              ;
+                    ld      @0                                  ;
+                    st      xpointTemp                          ; Resets xpointTemp
+                    ld      index                               ;
+                    add     @1                                  ;
+                    st      index                               ; Increment xArray index
+                    pop                                         ;
+                    add     @1                                  ; Increment xin index
+                    push                                        ;
+                    ja      rightOfDecimalX                     ;
 
-
-
+@0:                 dw      0                                   ;
+@1:                 dw      1                                   ;
+leadingZeroLeft:    dw      0                                   ; If set to 1, a significant digit has been stored to the left of the decimal, and zeros must be stored
 index:              dw      0                                   ;
 negCheck:           dw      2Dh                                 ; Check to set negative flag
+decimalCheck:       dw      2Eh                                 ; Checks for decimal point
+temp:               dw      0                                   ;
+xArray:             dw      20 dup 0                            ;
+xpointTemp:         dw      0                                   ;
+xpoint:             dw      0                                   ;
+xflag:              dw      0                                   ; 
 ;==========================================================================================================================================
 msg1:               dw      "enter another problem? (y/n)"      ;
 msg2:               dw      "enter xin:"                        ;
 msg3:               dw      "enter yin:"                        ;
 no:                 dw      6Eh                                 ;
 xin:                dw      20 dup 0                            ;
+xinBumper:          dw      -1                                  ; Used to signal that the xin and yin arrays have reached the end
 yin:                dw      20 dup 0                            ;
+yinBumper:          dw      -1                                  ;
