@@ -53,6 +53,10 @@ storeX:             ld      temp                                ;
                     ld      index                               ;
                     add     @1                                  ;
                     st      index                               ;
+                    ld      @1                                  ;
+                    st      leadingZeroLeft                     ;
+                    add     xLength                             ;
+                    store   xLength                             ; Useful to know the string's length when computing the multiplication
                     ja      floatMul                            ;
 rightOfDecimalX:    ldr     0                                   ; ***************************************************************** NOTE: ENTER DISCLAIMER, THAT PROGRAM WILL ONLY WORK WITH A DECIMAL POINT IN THE NUMBER
                     st      temp                                ;
@@ -74,6 +78,9 @@ rightOfDecimalX:    ldr     0                                   ; **************
 endOfStringX:       add     @1                                  ;
                     jnz     storeXRight                         ; All checks done, jumps to Stores
                     pop                                         ;
+                    ld      xpoint                              ;
+                    add     xLength                             ;
+                    st      xLength                             ;
                     ld      @0                                  ; Resets all reused variables, before jumping to floatMulY
                     st      index                               ;
                     st      leadingZeroLeft                     ;
@@ -96,6 +103,87 @@ storeXRight:        ld      temp                                ;
                     add     @1                                  ; Increment xin index
                     push                                        ;
                     ja      rightOfDecimalX                     ;
+floatMulY:          ldr     0                                   ; Repeat process with yin:
+                    st      temp                                ; 
+                    sub     negCheck                            ; 
+                    jnz     zeroCheckY                          ;
+                    ld      @1                                  ;
+                    st      yflag                               ; 
+                    pop                                         ;
+                    add     @1                                  ;
+                    push                                        ;
+                    ja      floatMulY                           ;
+zeroCheckY:         ld      leadingZeroLeft                     ; 
+                    jnz     decimalY                            ;
+                    ld      temp                                ;
+                    jnz     decimalY                            ;
+                    pop                                         ;
+                    add     @1                                  ;
+                    push                                        ;
+                    ja      floatMulY                           ;
+decimalY:           ld      temp                                ; 
+                    sub     decimalCheck                        ;
+                    jnz     storeY                              ; 
+                    pop                                         ;
+                    add     @1                                  ;
+                    push                                        ;
+                    ja      rightOfDecimalY                     ; 
+storeY:             ld      temp                                ;
+                    push                                        ;
+                    ldc     yArray                              ;
+                    add     index                               ;
+                    sti                                         ; 
+                    ld      index                               ;
+                    add     @1                                  ;
+                    st      index                               ;
+                    ld      @1                                  ;
+                    st      leadingZeroLeft                     ;
+                    add     yLength                             ;
+                    store   yLength                             ;
+                    ja      floatMulY                           ;
+rightOfDecimalY:    ldr     0                                   ; 
+                    st      temp                                ;
+                    jnz     endOfStringY                        ;
+                    push                                        ;
+                    ldc     yArray                              ;
+                    add     index                               ;
+                    sti                                         ;
+                    pop                                         ;
+                    add     @1                                  ;
+                    push                                        ;
+                    ld      index                               ;
+                    add     @1                                  ;
+                    st      index                               ;
+                    ld      ypointTemp                          ;
+                    add     @1                                  ;
+                    st      ypointTemp                          ; 
+                    ja      rightOfDecimalY                     ;
+endOfStringY:       add     @1                                  ;
+                    jnz     storeYRight                         ; 
+                    pop                                         ;
+                    ld      ypoint                              ;
+                    add     yLength                             ;
+                    st      yLength                             ;
+                    ja      zOut                                ;
+storeYRight:        ld      temp                                ;
+                    push                                        ;
+                    ldc     yArray                              ;
+                    add     index                               ;
+                    sti                                         ;
+                    ld      ypoint                              ;
+                    add     @1                                  ;
+                    add     ypointTemp                          ; 
+                    st      ypoint                              ;
+                    ld      @0                                  ;
+                    st      ypointTemp                          ; 
+                    ld      index                               ;
+                    add     @1                                  ;
+                    st      index                               ; 
+                    pop                                         ;
+                    add     @1                                  ; 
+                    push                                        ;
+                    ja      rightOfDecimalY                     ;
+zOut:
 
 @0:                 dw      0                                   ;
 @1:                 dw      1                                   ;
@@ -104,10 +192,16 @@ index:              dw      0                                   ;
 negCheck:           dw      2Dh                                 ; Check to set negative flag
 decimalCheck:       dw      2Eh                                 ; Checks for decimal point
 temp:               dw      0                                   ;
+xLength:            dw      0                                   ;
 xArray:             dw      20 dup 0                            ;
 xpointTemp:         dw      0                                   ;
 xpoint:             dw      0                                   ;
-xflag:              dw      0                                   ; 
+xflag:              dw      0                                   ;
+yLength:            dw      0                                   ; 
+yArray:             dw      20 dup 0                            ;
+ypointTemp:         dw      0                                   ;
+ypoint:             dw      0                                   ;
+yflag:              dw      0                                   ;
 ;==========================================================================================================================================
 msg1:               dw      "enter another problem? (y/n)"      ;
 msg2:               dw      "enter xin:"                        ;
