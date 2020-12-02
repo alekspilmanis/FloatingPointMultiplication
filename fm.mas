@@ -1,3 +1,4 @@
+!snew
 start:              ldc     msg1                                ; 
                     sout                                        ; Prompt to ask user if there is another problem
                     ain                                         ;
@@ -17,8 +18,35 @@ input:              ldc     msg2                                ; Prompt user to
                     ldc     xin                                 ;
                     push                                        ; Pushes both xin and yin into the stack for function call floatMul
                     call    floatMul                            ;
-
-
+                    pop                                         ;
+                    st      zLength                             ;
+                    ldc     msg4                                ;
+                    sout                                        ;
+print:              ldr     0                                   ;
+                    dout                                        ;
+                    ld      index                               ;
+                    add     @1                                  ;
+                    st      index                               ;
+                    pop                                         ;
+                    add     @1                                  ;
+                    push                                        ;
+                    ld      zlength                             ;
+                    sub     index                               ;
+                    jzop    print                               ; Prints zOut
+                    ld      @0                                  ;
+                    st      printIndex                          ; reset index
+                    ja      start                               ;
+printIndex:         dw      0                                   ;
+zLength:            dw      0                                   ;
+msg1:               dw      "enter another problem? (y/n)"      ;
+msg2:               dw      "enter xin:"                        ;
+msg3:               dw      "enter yin:"                        ;
+msg4:               dw      "Z out: "                           ;
+no:                 dw      6Eh                                 ;
+xin:                dw      20 dup 0                            ;
+xinBumper:          dw      -1                                  ; Used to signal that the xin and yin arrays have reached the end
+yin:                dw      20 dup 0                            ;
+yinBumper:          dw      -1                                  ;
 ;=============================================================  FLOATMUL  =================================================================           
 floatMul:           ldr     0                                   ; Parses one char of the string of numbers,
                     st      temp                                ; Stores it in temp
@@ -58,7 +86,7 @@ storeX:             ld      temp                                ;
                     add     xLength                             ;
                     store   xLength                             ; Useful to know the string's length when computing the multiplication
                     ja      floatMul                            ;
-rightOfDecimalX:    ldr     0                                   ; ***************************************************************** NOTE: ENTER DISCLAIMER, THAT PROGRAM WILL ONLY WORK WITH A DECIMAL POINT IN THE NUMBER
+rightOfDecimalX:    ldr     0                                   ; 
                     st      temp                                ;
                     jnz     endOfStringX                        ;
                     push                                        ;
@@ -163,8 +191,12 @@ endOfStringY:       add     @1                                  ;
                     pop                                         ;
                     ld      ypoint                              ;
                     add     yLength                             ;
+                    sub     @1                                  ; to accurately reflect the length of yin and xin, respective to index (not digits)
                     st      yLength                             ;
-                    ja      zOut                                ;
+                    ld      xLength                             ;
+                    sub     @1                                  ;
+                    st      xLength                             ;
+                    ja      outerLoop                           ;
 storeYRight:        ld      temp                                ;
                     push                                        ;
                     ldc     yArray                              ;
@@ -183,10 +215,92 @@ storeYRight:        ld      temp                                ;
                     add     @1                                  ; 
                     push                                        ;
                     ja      rightOfDecimalY                     ;
-zOut:
-
+outerLoop:          ld      yLength                             ; for (j=0; j<yLength; j++)
+                    sub     j                                   ;
+                    st      k                                   ;
+                    ld      @0                                  ;
+                    st      i                                   ;
+innerLoop:          ld      xLength                             ; for (i=0; i<xLength; i++)
+                    sub     i                                   ;
+                    st      m                                   ;
+                    ldc     xArray                              ;
+                    add     m                                   ;
+                    ldi                                         ;
+                    push                                        ;
+                    ldc     yArray                              ;
+                    add     k                                   ;
+                    mult                                        ;
+                    st      s                                   ;
+                    ldc     zOut                                ;
+                    add     m                                   ;
+                    add     k                                   ;
+                    add     1                                   ;
+                    ldi                                         ;
+                    add     s                                   ;
+                    add     c                                   ;
+                    st      s                                   ; s = x[m] * y[k] + z[m+k+1] + c
+                    push                                        ;
+                    ld      @10                                 ;
+                    div_mod                                     ;
+                    st      c                                   ; c = s/10
+                    ldc     zOut                                ;
+                    add     k                                   ;
+                    add     m                                   ;
+                    add     @1                                  ;
+                    sti                                         ; z[k+m+1] = s % 10
+                    ld      i                                   ;
+                    add     @1                                  ;
+                    st      i                                   ;
+                    ld      xLength                             ;
+                    sub     i                                   ;
+                    jzop    innerLoop                           ; i++, check for i = xlength
+                    ldc     zOut                                ;
+                    add     k                                   ;
+                    add     m                                   ;
+                    ldi                                         ;
+                    add     c                                   ;
+                    push                                        ;
+                    ldc     zOut                                ;
+                    add     k                                   ;
+                    add     m                                   ;
+                    sti                                         ; z[k+m] = z[k+m] + c
+                    ld      @0                                  ;
+                    st      c                                   ; c = 0
+                    ld      j                                   ;
+                    add     @1                                  ;
+                    st      j                                   ;
+                    ld      yLength                             ;
+                    sub     j                                   ;
+                    jzop    outerLoop                           ; j++, check for j = ylength
+                    ldc     zOut                                ;
+                    push                                        ; push zOut onto the stack
+                    ld      xLength                             ;
+                    add     @1                                  ;
+                    push                                        ;
+                    ld      yLength                             ;
+                    add     @1                                  ;
+                    mult                                        ;
+                    push                                        ; pushes zLength onto stack
+                    ld      @0                                  ; reset all variables in the case of a successive run
+                    st      index                               ;
+                    st      xLength                             ;
+                    st      xpointTemp                          ;
+                    st      xpoint                              ;
+                    st      xflag                               ;
+                    st      ylength                             ;
+                    st      ypointTemp                          ;
+                    st      ypoint                              ;
+                    st      yflag                               ;
+                    st      c                                   ;
+                    st      j                                   ;
+                    st      k                                   ;
+                    st      i                                   ;
+                    st      m                                   ;
+                    st      s                                   ;
+                    ret                                         ;
 @0:                 dw      0                                   ;
 @1:                 dw      1                                   ;
+@10:                dw      10                                  ;
 leadingZeroLeft:    dw      0                                   ; If set to 1, a significant digit has been stored to the left of the decimal, and zeros must be stored
 index:              dw      0                                   ;
 negCheck:           dw      2Dh                                 ; Check to set negative flag
@@ -202,12 +316,11 @@ yArray:             dw      20 dup 0                            ;
 ypointTemp:         dw      0                                   ;
 ypoint:             dw      0                                   ;
 yflag:              dw      0                                   ;
+zOut:               dw      100 dup 0                           ;
+c:                  dw      0                                   ; carry in digit
+j:                  dw      0                                   ;
+k:                  dw      0                                   ;
+i:                  dw      0                                   ;
+m:                  dw      0                                   ;
+s:                  dw      0                                   ;
 ;==========================================================================================================================================
-msg1:               dw      "enter another problem? (y/n)"      ;
-msg2:               dw      "enter xin:"                        ;
-msg3:               dw      "enter yin:"                        ;
-no:                 dw      6Eh                                 ;
-xin:                dw      20 dup 0                            ;
-xinBumper:          dw      -1                                  ; Used to signal that the xin and yin arrays have reached the end
-yin:                dw      20 dup 0                            ;
-yinBumper:          dw      -1                                  ;
